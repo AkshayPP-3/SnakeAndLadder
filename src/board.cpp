@@ -18,6 +18,19 @@ void DrawBoard(){
                 DrawRectangle(x,y,cellsSize,cellsSize,goldenYellow);
             }
             DrawRectangleLines(x,y,cellsSize,cellsSize,warmBrown);
+             int boardRow = 9- row;
+             int number;
+            if(boardRow%2==0){
+                number = boardRow*10+col+1;
+            }else{
+                number = boardRow*10+(10-col);
+            }
+            const char* text = TextFormat("%d", number);
+            int fontSize = 18;
+            int textWidth = MeasureText(text, fontSize);
+            int textX = x + (cellsSize - textWidth) / 2;
+            int textY = y + (cellsSize - fontSize) / 2;
+            DrawText(text, textX, textY, fontSize, DARKBROWN);
         }
     }
 }
