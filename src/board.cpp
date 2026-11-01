@@ -9,6 +9,8 @@ void DrawBoard(){
     Color warmBrown = {176, 139, 83, 255};
     for(int row=0;row<10;row++){
         for(int col=0;col<10;col++){
+
+            //board
             int x = startX + col * cellsSize;
             int y = startY + row * cellsSize;
             if((row+col)%2==0){
@@ -18,6 +20,8 @@ void DrawBoard(){
                 DrawRectangle(x,y,cellsSize,cellsSize,goldenYellow);
             }
             DrawRectangleLines(x,y,cellsSize,cellsSize,warmBrown);
+
+            //text
              int boardRow = 9- row;
              int number;
             if(boardRow%2==0){
