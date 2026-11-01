@@ -1,5 +1,5 @@
 #include "raylib.h"
-
+#include "board.hpp"
 int main()
 {
     const int screenWidth = 800;
@@ -14,8 +14,8 @@ int main()
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
-        DrawRectangle(350, 250, 60, 80, RED);
-        DrawRectangleLines(350, 250, 60, 80, BLACK);
+        DrawBoard();
+
         EndDrawing();
     }
 
