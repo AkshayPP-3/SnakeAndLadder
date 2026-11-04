@@ -1,4 +1,3 @@
-
 #include "game.hpp"
 
 Game::Game() {
@@ -38,4 +37,17 @@ int Game::checkPosition(int position){
         }
     }
     return position;
+}
+void  Game::playTurn(Player& player, Dice& dice){
+    int diceValue = dice.roll();
+    int currentPosition =player.getPosition();
+    int newPosition = diceValue + currentPosition;
+    
+    if(newPosition>100) return;
+
+    // Check for snake or ladder
+    newPosition = checkPosition(newPosition);
+
+    // Update player's position
+    player.setPosition(newPosition);
 }

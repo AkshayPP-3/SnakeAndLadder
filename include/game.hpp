@@ -1,3 +1,6 @@
+#include "player.hpp"
+#include "dice.hpp"
+
 #pragma once
 
 struct SnakeLadder {
@@ -13,4 +16,5 @@ private:
 public:
     Game();
     int checkPosition(int position);
+    void playTurn(Player& player, Dice& dice);
 };
