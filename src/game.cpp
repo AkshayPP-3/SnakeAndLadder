@@ -40,6 +40,16 @@ int Game::checkPosition(int position){
 }
 void  Game::playTurn(Player& player, Dice& dice){
     int diceValue = dice.roll();
+
+    //only move when dice shows 1 in the first step
+    if (player.getPosition() == 0) {
+
+        if (diceValue == 1) {
+            player.setPosition(1);
+        }
+
+        return;
+    }
     int currentPosition =player.getPosition();
     int newPosition = diceValue + currentPosition;
     
