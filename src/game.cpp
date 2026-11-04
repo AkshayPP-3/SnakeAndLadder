@@ -62,6 +62,6 @@ void  Game::playTurn(Player& player, Dice& dice){
     player.setPosition(newPosition);
 }
 
-bool Game::checkWinner(const Player& player){
+bool Game::checkWinner(const Player& player) {
     return player.getPosition() == 100;
 }

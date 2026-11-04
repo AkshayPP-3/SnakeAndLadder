@@ -13,7 +13,7 @@ public:
     Player(string playerName);
 
     void move(int steps);
-    int getPosition();
+    int getPosition() const;
     string getName();
     void setPosition(int newPosition);
 };

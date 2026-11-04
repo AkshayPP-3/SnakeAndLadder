@@ -16,6 +16,6 @@ private:
 public:
     Game();
     int checkPosition(int position);
-    void playTurn(const Player& player, Dice& dice);
-    bool checkWinner(Player& player);
+    void playTurn(Player& player, Dice& dice);
+    bool checkWinner(const Player& player);
 };
