@@ -38,3 +38,24 @@ void DrawBoard(){
         }
     }
 }
+
+Vector2 GetCellCenter(int position)
+{
+    int cellSize = 50;
+    int startX = 150;
+    int startY = 50;
+
+    int row = (position - 1) / 10;
+    int col = (position - 1) % 10;
+
+    // Reverse column direction for alternate rows
+    if (row % 2 == 1)
+    {
+        col = 9 - col;
+    }
+
+    int x = startX + col * cellSize + cellSize / 2;
+    int y = startY + (9 - row) * cellSize + cellSize / 2;
+
+    return {(float)x, (float)y};
+}
