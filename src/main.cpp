@@ -1,22 +1,21 @@
 #include "raylib.h"
 #include "board.hpp"
 #include "game.hpp"
-#include "dice.hpp"
 #include <cstdlib>
 #include <ctime>
+
 int main()
 {
     const int screenWidth = 800;
     const int screenHeight = 600;
-    
-    srand(time(0));
 
-    Game game;
-    Dice dice;
+    srand(static_cast<unsigned int>(time(0)));
 
     InitWindow(screenWidth, screenHeight, "Snake and Ladder");
 
     SetTargetFPS(60);
+
+    Game game;
 
     while (!WindowShouldClose())
     {
@@ -24,6 +23,7 @@ int main()
 
         ClearBackground(RAYWHITE);
         DrawBoard();
+
         EndDrawing();
     }
 

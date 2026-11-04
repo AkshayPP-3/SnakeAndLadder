@@ -1,5 +1,5 @@
 #pragma once
 
-void DrawBoard();
+#include "raylib.h"
 
-void DrawText();
+void DrawBoard();
