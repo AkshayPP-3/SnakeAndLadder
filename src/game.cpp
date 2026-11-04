@@ -26,3 +26,16 @@ Game::Game() {
 
 }
 
+int Game::checkPosition(int position){
+    for(int i=0;i<8;i++){
+        if(position==ladders[i].start){
+            return ladders[i].end;
+        }
+    }
+    for(int i=0;i<9;i++){
+        if(position==snakes[i].start){
+            return snakes[i].end;
+        }
+    }
+    return position;
+}
