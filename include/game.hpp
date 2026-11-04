@@ -17,4 +17,5 @@ public:
     Game();
     int checkPosition(int position);
     void playTurn(Player& player, Dice& dice);
+    bool checkWinner(Player& player);
 };

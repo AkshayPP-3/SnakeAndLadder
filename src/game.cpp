@@ -61,3 +61,7 @@ void  Game::playTurn(Player& player, Dice& dice){
     // Update player's position
     player.setPosition(newPosition);
 }
+
+bool Game::checkWinner(Player& player){
+    return player.getPosition() == 100;
+}
