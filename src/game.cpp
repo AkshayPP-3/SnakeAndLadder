@@ -117,8 +117,22 @@ void Game::switchTurn() {
     }
 }
 
-// Check whether game is over
-bool Game::isGameOver() const {
+Player& Game::getPlayer1() {
+    return player1;
+}
 
+Player& Game::getPlayer2() {
+    return player2;
+}
+
+int Game::getCurrentPlayerNumber() const {
+    return currentPlayer + 1;
+}
+
+int Game::getLastDiceValue() const {
+    return lastDiceValue;
+}
+
+bool Game::isGameOver() const {
     return gameOver;
 }

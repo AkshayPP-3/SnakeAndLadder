@@ -20,14 +20,22 @@ private:
 
     int currentPlayer;
     bool gameOver;
+    int lastDiceValue;
 
 public:
     Game();
 
     int checkPosition(int position);
     void playTurn();
-    bool checkWinner(const Player& player);
     void switchTurn();
     Player& getCurrentPlayer();
+
+    bool checkWinner(const Player& player);
     bool isGameOver() const;
+
+    Player& getPlayer1();
+    Player& getPlayer2();
+
+    int getCurrentPlayerNumber() const;
+    int getLastDiceValue() const;
 };
