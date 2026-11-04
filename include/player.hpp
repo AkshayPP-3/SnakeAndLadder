@@ -14,6 +14,6 @@ public:
 
     void move(int steps);
     int getPosition() const;
-    string getName();
+    string getName() const;
     void setPosition(int newPosition);
 };

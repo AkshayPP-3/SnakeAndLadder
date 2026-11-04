@@ -7,10 +7,10 @@ Player::Player(string playerName){
 void Player::move(int steps){
     position += steps;
 }
-int Player::getPosition(){
+int Player::getPosition()const{
     return position;
 }
-string Player::getName(){
+string Player::getName() const{
     return name;
 }
 void Player::setPosition(int newPosition){
