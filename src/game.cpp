@@ -1,7 +1,12 @@
 #include "game.hpp"
 
-Game::Game() {
-
+// Constructor
+Game::Game()
+    : player1("Player 1"),
+      player2("Player 2"),
+      currentPlayer(0),
+      gameOver(false)
+{
     // Initialize ladder positions
     ladders[0] = {2, 18};
     ladders[1] = {9, 28};
@@ -22,46 +27,98 @@ Game::Game() {
     snakes[6] = {95, 75};
     snakes[7] = {97, 58};
     snakes[8] = {99, 81};
-
 }
 
-int Game::checkPosition(int position){
-    for(int i=0;i<8;i++){
-        if(position==ladders[i].start){
+int Game::checkPosition(int position) {
+    // Check ladders
+    for (int i=0;i<8;i++) {
+        if (position == ladders[i].start) {
             return ladders[i].end;
         }
     }
-    for(int i=0;i<9;i++){
-        if(position==snakes[i].start){
+
+    // Check snakes
+    for (int i = 0;i<9;i++) {
+        if (position == snakes[i].start) {
             return snakes[i].end;
         }
     }
     return position;
 }
-void  Game::playTurn(Player& player, Dice& dice){
+
+void Game::playTurn() {
+    if (gameOver) {
+        return;
+    }
+    // Get the current player
+    Player& player = getCurrentPlayer();
+
+    // Roll dice
     int diceValue = dice.roll();
 
-    //only move when dice shows 1 in the first step
+    // Starting rule: player must roll 1
     if (player.getPosition() == 0) {
 
         if (diceValue == 1) {
             player.setPosition(1);
         }
 
+        switchTurn();
         return;
     }
-    int currentPosition =player.getPosition();
-    int newPosition = diceValue + currentPosition;
-    
-    if(newPosition>100) return;
 
-    // Check for snake or ladder
-    newPosition = checkPosition(newPosition);
+    // Calculate new position
+    int newPosition = player.getPosition() + diceValue;
 
-    // Update player's position
-    player.setPosition(newPosition);
+    // Move only if position does not exceed 100
+    if (newPosition <= 100) {
+
+        // Check snake or ladder
+        newPosition = checkPosition(newPosition);
+
+        // Update player position
+        player.setPosition(newPosition);
+    }
+
+    // Check winning condition
+    if (checkWinner(player)) {
+        gameOver = true;
+        return;
+    }
+
+    // Switch to the next player
+    switchTurn();
 }
 
+// Check whether player has won
 bool Game::checkWinner(const Player& player) {
+
     return player.getPosition() == 100;
+}
+
+// Get current player
+Player& Game::getCurrentPlayer() {
+
+    if (currentPlayer == 0) {
+        return player1;
+    }
+
+    return player2;
+}
+
+// Switch between players
+void Game::switchTurn() {
+
+    if (currentPlayer == 0) {
+        currentPlayer = 1;
+    }
+    else {
+        currentPlayer = 0;
+    }
+}
+
+// Check whether game is over
+bool Game::isGameOver() const {
+
+    return gameOver;
 }

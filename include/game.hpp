@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "player.hpp"
@@ -17,15 +16,18 @@ private:
     Player player1;
     Player player2;
 
+    Dice dice;
+
     int currentPlayer;
     bool gameOver;
-
-    Dice dice;
 
 public:
     Game();
 
     int checkPosition(int position);
-    void playTurn(Player& player, Dice& dice);
+    void playTurn();
     bool checkWinner(const Player& player);
+    void switchTurn();
+    Player& getCurrentPlayer();
+    bool isGameOver() const;
 };
