@@ -48,7 +48,6 @@ Vector2 GetCellCenter(int position)
     int row = (position - 1) / 10;
     int col = (position - 1) % 10;
 
-    // Reverse column direction for alternate rows
     if (row % 2 == 1)
     {
         col = 9 - col;
