@@ -25,17 +25,21 @@ Vector2 CellCenter(int n)
     };
 }
 
-struct SnakeDef
+// A sprite (snake or ladder) stretched between two cells.
+//   from/to      : cell numbers
+//   file         : image of this one sprite
+//   fromPoint    : point inside the image that lands on the "from" cell center
+//   toPoint      : point inside the image that lands on the "to" cell center
+struct SpriteDef
 {
-    int head;              // cell where the snake's head is
-    int tail;              // cell where the snake's tail ends
-    const char *file;      // image of this one snake
-    Vector2 headPoint;     // face center inside the image (pixels)
-    Vector2 tailPoint;     // tail tip inside the image (pixels)
+    int from;
+    int to;
+    const char *file;
+    Vector2 fromPoint;
+    Vector2 toPoint;
 };
 
-// snakes[0] .. snakes[8]  ->  {head, tail} as you specified
-const SnakeDef SNAKE_DEFS[9] = {
+const SpriteDef SNAKE_DEFS[9] = {
     {27,  5, "assets/images/snakes/snake_0.png", {126.8f, 11.9f}, {1.1f, 76.8f}},
     {38, 17, "assets/images/snakes/snake_1.png", {28.9f, 14.5f}, {31.2f, 126.3f}},
     {52, 33, "assets/images/snakes/snake_2.png", {70.8f, 15.5f}, {7.5f, 107.6f}},
@@ -47,22 +51,33 @@ const SnakeDef SNAKE_DEFS[9] = {
     {99, 81, "assets/images/snakes/snake_8.png", {53.1f, 11.0f}, {1.0f, 58.7f}},
 };
 
-// Draw one snake so its head sits on the head cell and its tail tip on the tail cell
-void DrawSnake(const SnakeDef &s, Texture2D tex)
-{
-    Vector2 h = CellCenter(s.head);
-    Vector2 t = CellCenter(s.tail);
+const SpriteDef LADDER_DEFS[8] = {
+    { 2, 18, "assets/images/ladders/ladder_0.png", {18.0f, 80.0f}, {18.0f, 9.0f}},
+    { 9, 28, "assets/images/ladders/ladder_1.png", {18.0f, 121.0f}, {18.0f, 9.0f}},
+    {25, 47, "assets/images/ladders/ladder_2.png", {18.0f, 150.0f}, {18.0f, 9.0f}},
+    {30, 50, "assets/images/ladders/ladder_3.png", {18.0f, 109.0f}, {18.0f, 9.0f}},
+    {45, 57, "assets/images/ladders/ladder_4.png", {18.0f, 80.0f}, {18.0f, 9.0f}},
+    {51, 73, "assets/images/ladders/ladder_5.png", {18.0f, 150.0f}, {18.0f, 9.0f}},
+    {65, 85, "assets/images/ladders/ladder_6.png", {18.0f, 109.0f}, {18.0f, 9.0f}},
+    {79, 98, "assets/images/ladders/ladder_7.png", {18.0f, 121.0f}, {18.0f, 9.0f}},
+};
 
-    float bx = t.x - h.x, by = t.y - h.y;                       // board vector
-    float sx = s.tailPoint.x - s.headPoint.x;                   // image vector
-    float sy = s.tailPoint.y - s.headPoint.y;
+// Draw a sprite so that fromPoint sits on cell "from" and toPoint on cell "to"
+void DrawBetweenCells(const SpriteDef &s, Texture2D tex)
+{
+    Vector2 a = CellCenter(s.from);
+    Vector2 b = CellCenter(s.to);
+
+    float bx = b.x - a.x, by = b.y - a.y;                       // board vector
+    float sx = s.toPoint.x - s.fromPoint.x;                     // image vector
+    float sy = s.toPoint.y - s.fromPoint.y;
 
     float scale    = std::sqrt(bx * bx + by * by) / std::sqrt(sx * sx + sy * sy);
     float rotation = (std::atan2(by, bx) - std::atan2(sy, sx)) * RAD2DEG;
 
     Rectangle src  = {0, 0, (float)tex.width, (float)tex.height};
-    Rectangle dest = {h.x, h.y, tex.width * scale, tex.height * scale};
-    Vector2 origin = {s.headPoint.x * scale, s.headPoint.y * scale};  // rotate around the head
+    Rectangle dest = {a.x, a.y, tex.width * scale, tex.height * scale};
+    Vector2 origin = {s.fromPoint.x * scale, s.fromPoint.y * scale};  // rotate around the start point
 
     DrawTexturePro(tex, src, dest, origin, rotation, WHITE);
 }
@@ -88,6 +103,13 @@ int main()
         SetTextureFilter(snakeTex[i], TEXTURE_FILTER_BILINEAR);
     }
 
+    Texture2D ladderTex[8];
+    for (int i = 0; i < 8; i++)
+    {
+        ladderTex[i] = LoadTexture(LADDER_DEFS[i].file);
+        SetTextureFilter(ladderTex[i], TEXTURE_FILTER_BILINEAR);
+    }
+
     Game game;
 
     while (!WindowShouldClose())
@@ -98,9 +120,13 @@ int main()
 
         DrawBoard();
 
+        // Ladders first, so snakes are drawn on top
+        for (int i = 0; i < 8; i++)
+            DrawBetweenCells(LADDER_DEFS[i], ladderTex[i]);
+
         // Snakes
         for (int i = 0; i < 9; i++)
-            DrawSnake(SNAKE_DEFS[i], snakeTex[i]);
+            DrawBetweenCells(SNAKE_DEFS[i], snakeTex[i]);
 
         // Players outside the board (left side), one cell in size
         float p1Scale = (float)CELL / player1.height;
@@ -115,6 +141,7 @@ int main()
     UnloadTexture(player1);
     UnloadTexture(player2);
     for (int i = 0; i < 9; i++) UnloadTexture(snakeTex[i]);
+    for (int i = 0; i < 8; i++) UnloadTexture(ladderTex[i]);
 
     CloseWindow();
 
