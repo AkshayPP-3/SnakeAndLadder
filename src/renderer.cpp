@@ -13,6 +13,11 @@ const float DICE_Y = 290.0f;
 const float DICE1_X = 79.0f;
 const float DICE2_X = 721.0f;
 
+const float PAWN_HEIGHT       = 40.0f;   // pawn height on screen
+const float PAWN_FOOT         = 18.0f;   // how far below the cell center the pawn's feet stand
+const float PAWN_SPREAD       = 8.0f;    // sideways shift when both pawns share a cell
+const float PAWN_SPREAD_RANGE = 30.0f;   // pawns closer than this start sliding apart
+
 struct SpriteDef
 {
     int from;
@@ -58,6 +63,35 @@ Vector2 CellCenter(int n)
         (float)(BOARD_X + col * CELL + CELL / 2),
         (float)(BOARD_Y + (9 - row) * CELL + CELL / 2)
     };
+}
+
+Vector2 GetPawnHome(int playerNumber)
+{
+    float x = (playerNumber == 1) ? DICE1_X : DICE2_X;
+    float y = DICE_Y + DICE_SIZE / 2 + 8 + 30 + 10 + PAWN_HEIGHT;
+
+    return {x, y};
+}
+
+Vector2 GetPawnAnchor(int cell)
+{
+    Vector2 c = CellCenter(cell);
+
+    return {c.x, c.y + PAWN_FOOT};
+}
+
+// Draw a pawn with its feet (bottom-center) at "anchor"
+void DrawPawn(Texture2D tex, Vector2 anchor)
+{
+    float scale = PAWN_HEIGHT / tex.height;
+
+    DrawTextureEx(
+        tex,
+        {anchor.x - tex.width * scale / 2, anchor.y - PAWN_HEIGHT},
+        0.0f,
+        scale,
+        WHITE
+    );
 }
 
 void DrawBetweenCells(const SpriteDef& s, Texture2D tex)
@@ -162,6 +196,8 @@ void LoadRenderer(Renderer& renderer)
     renderer.labelP2 = LoadTexture("assets/images/ui/label_p2.png");
     renderer.settingsIcon = LoadTexture("assets/images/ui/settings.png");
 
+    SetTextureFilter(renderer.player1, TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(renderer.player2, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(renderer.diceSheet, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(renderer.labelP1, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(renderer.labelP2, TEXTURE_FILTER_BILINEAR);
@@ -183,7 +219,9 @@ void LoadRenderer(Renderer& renderer)
 void DrawRenderer(
     const Renderer& renderer,
     int diceFace1,
-    int diceFace2
+    int diceFace2,
+    Vector2 pawn1Position,
+    Vector2 pawn2Position
 )
 {
     ClearBackground(RAYWHITE);
@@ -204,26 +242,33 @@ void DrawRenderer(
     DrawDice(renderer.diceSheet, diceFace2, DICE2_X, DICE_Y);
     DrawLabel(renderer.labelP2, DICE2_X, DICE_Y + DICE_SIZE / 2 + 8);
 
-    float pawnTop = DICE_Y + DICE_SIZE / 2 + 8 + 30 + 10;
+    // Pawns are drawn at their animated positions
+    Vector2 p1 = pawn1Position;
+    Vector2 p2 = pawn2Position;
 
-    float p1Scale = (float)CELL / renderer.player1.height;
-    float p2Scale = (float)CELL / renderer.player2.height;
+    // When both pawns are on the same cell, slide them apart a little
+    float dx = p1.x - p2.x;
+    float dy = p1.y - p2.y;
+    float distance = std::sqrt(dx * dx + dy * dy);
 
-    DrawTextureEx(
-        renderer.player1,
-        {DICE1_X - renderer.player1.width * p1Scale / 2, pawnTop},
-        0.0f,
-        p1Scale,
-        WHITE
-    );
+    float closeness = (PAWN_SPREAD_RANGE - distance) / PAWN_SPREAD_RANGE;
+    if (closeness < 0.0f) closeness = 0.0f;
+    if (closeness > 1.0f) closeness = 1.0f;
 
-    DrawTextureEx(
-        renderer.player2,
-        {DICE2_X - renderer.player2.width * p2Scale / 2, pawnTop},
-        0.0f,
-        p2Scale,
-        WHITE
-    );
+    p1.x -= PAWN_SPREAD * closeness;
+    p2.x += PAWN_SPREAD * closeness;
+
+    // The pawn that is lower on the screen is drawn last, so it appears in front
+    if (p1.y <= p2.y)
+    {
+        DrawPawn(renderer.player1, p1);
+        DrawPawn(renderer.player2, p2);
+    }
+    else
+    {
+        DrawPawn(renderer.player2, p2);
+        DrawPawn(renderer.player1, p1);
+    }
 
     DrawTextureEx(
         renderer.settingsIcon,
