@@ -5,7 +5,8 @@ Game::Game()
     : player1("Player 1"),
       player2("Player 2"),
       currentPlayer(0),
-      gameOver(false)
+      gameOver(false),
+      lastDiceValue(0)
 {
     // Initialize ladder positions
     ladders[0] = {2, 18};
@@ -46,25 +47,36 @@ int Game::checkPosition(int position) {
     return position;
 }
 
-void Game::playTurn() {
+// Plays one turn using the dice value that was shown on screen.
+// The returned TurnResult tells the animation code what to move.
+TurnResult Game::playTurn(int diceValue) {
+    TurnResult result = {getCurrentPlayerNumber(), 0, 0, 0, false};
+
     if (gameOver) {
-        return;
+        return result;
     }
     // Get the current player
     Player& player = getCurrentPlayer();
 
-    // Roll dice
-    int diceValue = dice.roll();
+    lastDiceValue = diceValue;
+
+    result.from = player.getPosition();
+    result.landed = result.from;
+    result.to = result.from;
 
     // Starting rule: player must roll 1
     if (player.getPosition() == 0) {
 
         if (diceValue == 1) {
             player.setPosition(1);
+
+            result.landed = 1;
+            result.to = 1;
+            result.moved = true;
         }
 
         switchTurn();
-        return;
+        return result;
     }
 
     // Calculate new position
@@ -73,21 +85,27 @@ void Game::playTurn() {
     // Move only if position does not exceed 100
     if (newPosition <= 100) {
 
+        result.landed = newPosition;
+
         // Check snake or ladder
         newPosition = checkPosition(newPosition);
 
         // Update player position
         player.setPosition(newPosition);
+
+        result.to = newPosition;
+        result.moved = true;
     }
 
     // Check winning condition
     if (checkWinner(player)) {
         gameOver = true;
-        return;
+        return result;
     }
 
     // Switch to the next player
     switchTurn();
+    return result;
 }
 
 // Check whether player has won
