@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "game.hpp"
 #include "renderer.hpp"
+#include "movement.hpp"
 
 #include <cstdlib>
 #include <ctime>
@@ -21,6 +22,12 @@ int main()
 
     Game game;
 
+    // Pawn animation: starts outside the board, beside each dice
+    Movement pawn1;
+    Movement pawn2;
+    pawn1.setPosition(GetPawnHome(1));
+    pawn2.setPosition(GetPawnHome(2));
+
     int diceFace1 = 1;
     int diceFace2 = 1;
 
@@ -37,7 +44,11 @@ int main()
 
     while (!WindowShouldClose())
     {
-        if (!isRolling && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        // Wait until the pawns stop moving before the next roll
+        bool pawnsMoving = pawn1.isMoving() || pawn2.isMoving();
+
+        if (!isRolling && !pawnsMoving && !game.isGameOver()
+            && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
             Vector2 mousePosition = GetMousePosition();
 
@@ -88,7 +99,13 @@ int main()
                 rollTimer = 0.0f;
                 faceTimer = 0.0f;
 
-                game.switchTurn();
+                // Apply the dice value to the game, then animate the pawn
+                TurnResult result = game.playTurn(finalDiceValue);
+
+                if (result.player == 1)
+                    PlanPawnMove(pawn1, result);
+                else
+                    PlanPawnMove(pawn2, result);
 
                 TraceLog(LOG_INFO, "Dice result: %d", finalDiceValue);
                 TraceLog(LOG_INFO, "Next player: %d",
@@ -96,9 +113,13 @@ int main()
             }
         }
 
+        pawn1.update(GetFrameTime());
+        pawn2.update(GetFrameTime());
+
         BeginDrawing();
 
-        DrawRenderer(renderer, diceFace1, diceFace2);
+        DrawRenderer(renderer, diceFace1, diceFace2,
+                     pawn1.getPosition(), pawn2.getPosition());
 
         EndDrawing();
     }
