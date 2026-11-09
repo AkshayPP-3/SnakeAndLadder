@@ -74,6 +74,11 @@ TurnResult Game::playTurn(int diceValue) {
             result.landed = 1;
             result.to = 1;
             result.moved = true;
+
+            // Entering the board with a 1 gives one extra turn (only this first step)
+            consecutiveSixes = 0;
+            result.extraTurn = true;
+            return result;
         }
 
         result.extraTurn = finishTurn(diceValue);
