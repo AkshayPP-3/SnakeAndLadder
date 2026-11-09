@@ -84,11 +84,26 @@ void DrawBetweenCells(const SpriteDef &s, Texture2D tex)
     DrawTexturePro(tex, src, dest, origin, rotation, WHITE);
 }
 
-// ---------- UI layout (800 x 600 window) ----------
+//  UI layout
 const float DICE_SIZE = 80.0f;
 const float DICE_Y    = 290.0f;      // vertical center of both dice
 const float DICE1_X   = 79.0f;       // left of the board  (Player 1)
 const float DICE2_X   = 721.0f;      // right of the board (Player 2)
+
+//Dice clickable areas
+Rectangle player1DiceBounds = {
+    DICE1_X - DICE_SIZE / 2,
+    DICE_Y - DICE_SIZE / 2,
+    DICE_SIZE,
+    DICE_SIZE
+};
+
+Rectangle player2DiceBounds = {
+    DICE2_X - DICE_SIZE / 2,
+    DICE_Y - DICE_SIZE / 2,
+    DICE_SIZE,
+    DICE_SIZE
+};
 
 // Draw one face (1..6) of the dice sheet, centered at (cx, cy)
 void DrawDice(Texture2D sheet, int face, float cx, float cy)
@@ -150,13 +165,33 @@ int main()
 
     Game game;
 
+
     while (!WindowShouldClose())
     {
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+        {
+            Vector2 mousePosition = GetMousePosition();
+
+            if (CheckCollisionPointRec(mousePosition, player1DiceBounds)
+                && game.getCurrentPlayerNumber() == 1)
+            {
+                TraceLog(LOG_INFO, "Player 1 dice clicked!");
+
+                game.switchTurn();
+            }
+            else if (CheckCollisionPointRec(mousePosition, player2DiceBounds)
+                    && game.getCurrentPlayerNumber() == 2)
+            {
+                TraceLog(LOG_INFO, "Player 2 dice clicked!");
+
+                game.switchTurn();
+            }
+        }
+
         BeginDrawing();
 
         ClearBackground(RAYWHITE);
 
-        // Background (drawn first, behind everything)
         DrawTexture(background, 0, 0, WHITE);
 
         DrawBoard();
