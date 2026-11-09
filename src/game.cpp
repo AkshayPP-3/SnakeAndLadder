@@ -6,7 +6,8 @@ Game::Game()
       player2("Player 2"),
       currentPlayer(0),
       gameOver(false),
-      lastDiceValue(0)
+      lastDiceValue(0),
+      consecutiveSixes(0)
 {
     // Initialize ladder positions
     ladders[0] = {2, 18};
@@ -50,7 +51,7 @@ int Game::checkPosition(int position) {
 // Plays one turn using the dice value that was shown on screen.
 // The returned TurnResult tells the animation code what to move.
 TurnResult Game::playTurn(int diceValue) {
-    TurnResult result = {getCurrentPlayerNumber(), 0, 0, 0, false};
+    TurnResult result = {getCurrentPlayerNumber(), 0, 0, 0, false, false};
 
     if (gameOver) {
         return result;
@@ -75,7 +76,7 @@ TurnResult Game::playTurn(int diceValue) {
             result.moved = true;
         }
 
-        switchTurn();
+        result.extraTurn = finishTurn(diceValue);
         return result;
     }
 
@@ -103,9 +104,28 @@ TurnResult Game::playTurn(int diceValue) {
         return result;
     }
 
-    // Switch to the next player
-    switchTurn();
+    // Switch to the next player (or give an extra turn after a 6)
+    result.extraTurn = finishTurn(diceValue);
     return result;
+}
+
+// Rolling a 6 gives the same player another turn.
+// A 6 on the first and second roll gives another turn, the third 6 in a row
+// still moves the pawn but the turn goes to the opponent.
+// Returns true if the same player plays again.
+bool Game::finishTurn(int diceValue) {
+
+    if (diceValue == 6) {
+        consecutiveSixes++;
+
+        if (consecutiveSixes < 3) {
+            return true;
+        }
+    }
+
+    consecutiveSixes = 0;
+    switchTurn();
+    return false;
 }
 
 // Check whether player has won
