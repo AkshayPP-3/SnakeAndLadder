@@ -24,8 +24,13 @@ void UnloadRenderer(Renderer& renderer);
 void DrawRenderer(
     const Renderer& renderer,
     int diceFace1,
-    int diceFace2
+    int diceFace2,
+    Vector2 pawn1Position,
+    Vector2 pawn2Position
 );
+
+Vector2 GetPawnHome(int playerNumber);
+Vector2 GetPawnAnchor(int cell);  
 
 Rectangle GetPlayer1DiceBounds();
 Rectangle GetPlayer2DiceBounds();

@@ -8,6 +8,15 @@ struct SnakeLadder {
     int end;
 };
 
+
+struct TurnResult {
+    int player;
+    int from;
+    int landed;
+    int to;
+    bool moved;
+};
+
 class Game {
 private:
     SnakeLadder ladders[8];
@@ -26,7 +35,7 @@ public:
     Game();
 
     int checkPosition(int position);
-    void playTurn();
+    TurnResult playTurn(int diceValue);
     void switchTurn();
     Player& getCurrentPlayer();
 
