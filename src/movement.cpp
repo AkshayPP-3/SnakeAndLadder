@@ -53,7 +53,6 @@ void Movement::begin()
     moving = true;
 }
 
-// Start the leg at stepIndex from wherever the pawn is now
 void Movement::beginStep()
 {
     const MoveStep& step = steps[stepIndex];
@@ -63,8 +62,6 @@ void Movement::beginStep()
 
     duration = (step.duration > 0.001f) ? step.duration : 0.001f;
     hopHeight = step.hopHeight;
-
-    // A negative timer means "still waiting before this leg starts"
     timer = -step.pauseBefore;
 }
 
@@ -87,13 +84,12 @@ void Movement::update(float deltaTime)
         legFinished = true;
     }
 
-    // Smooth ease-in-out interpolation
     float smoothProgress = progress * progress * (3.0f - 2.0f * progress);
 
     currentPosition.x = startPosition.x +
         (targetPosition.x - startPosition.x) * smoothProgress;
 
-    // The hop lifts the pawn up and brings it back down on the target
+
     currentPosition.y = startPosition.y +
         (targetPosition.y - startPosition.y) * smoothProgress -
         hopHeight * std::sin(PI * progress);
@@ -132,22 +128,19 @@ void PlanPawnMove(Movement& movement, const TurnResult& result)
     if (!result.moved)
         return;
 
-    const float hopTime   = 0.28f;   // seconds per cell
-    const float hopHeight = 12.0f;   // pixels
+    const float hopTime   = 0.28f;
+    const float hopHeight = 12.0f;
 
     if (result.from == 0)
     {
-        // Got a 1: pawn travels from outside the board to cell 1
         movement.addStep(GetPawnAnchor(1), 0.9f, 40.0f);
     }
     else
     {
-        // Normal move: one hop per cell
         for (int cell = result.from + 1; cell <= result.landed; cell++)
             movement.addStep(GetPawnAnchor(cell), hopTime, hopHeight);
     }
 
-    // Snake head or ladder bottom: slide smoothly to the other end
     if (result.to != result.landed)
     {
         Vector2 a = GetPawnAnchor(result.landed);
@@ -157,7 +150,6 @@ void PlanPawnMove(Movement& movement, const TurnResult& result)
         float dy = b.y - a.y;
         float distance = std::sqrt(dx * dx + dy * dy);
 
-        // short pause on the cell first, longer slide for longer snakes / ladders
         movement.addStep(b, 0.6f + distance / 500.0f, 0.0f, 0.35f);
     }
 

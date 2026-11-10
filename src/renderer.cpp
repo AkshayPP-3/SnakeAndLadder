@@ -13,10 +13,10 @@ const float DICE_Y = 290.0f;
 const float DICE1_X = 79.0f;
 const float DICE2_X = 721.0f;
 
-const float PAWN_HEIGHT       = 40.0f;   // pawn height on screen
-const float PAWN_FOOT         = 18.0f;   // how far below the cell center the pawn's feet stand
-const float PAWN_SPREAD       = 8.0f;    // sideways shift when both pawns share a cell
-const float PAWN_SPREAD_RANGE = 30.0f;   // pawns closer than this start sliding apart
+const float PAWN_HEIGHT       = 40.0f;
+const float PAWN_FOOT         = 18.0f;
+const float PAWN_SPREAD       = 8.0f;
+const float PAWN_SPREAD_RANGE = 30.0f;
 
 struct SpriteDef
 {
@@ -80,7 +80,6 @@ Vector2 GetPawnAnchor(int cell)
     return {c.x, c.y + PAWN_FOOT};
 }
 
-// Draw a pawn with its feet (bottom-center) at "anchor"
 void DrawPawn(Texture2D tex, Vector2 anchor)
 {
     float scale = PAWN_HEIGHT / tex.height;
