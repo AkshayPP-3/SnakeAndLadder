@@ -28,6 +28,9 @@ int main()
     pawn1.setPosition(GetPawnHome(1));
     pawn2.setPosition(GetPawnHome(2));
 
+    // Winning animation (confetti, banner, "Play again" button)
+    WinAnimation win;
+
     int diceFace1 = 1;
     int diceFace2 = 1;
 
@@ -44,8 +47,30 @@ int main()
 
     while (!WindowShouldClose())
     {
+        // "Play again": start a fresh game
+        if (IsPlayAgainPressed(win))
+        {
+            game = Game();
+
+            pawn1.setPosition(GetPawnHome(1));
+            pawn2.setPosition(GetPawnHome(2));
+
+            diceFace1 = 1;
+            diceFace2 = 1;
+
+            isRolling = false;
+            rollTimer = 0.0f;
+            faceTimer = 0.0f;
+
+            win.active = false;
+        }
+
         // Wait until the pawns stop moving before the next roll
         bool pawnsMoving = pawn1.isMoving() || pawn2.isMoving();
+
+        // Start the winning animation once the winner's pawn reached the end
+        if (game.isGameOver() && !pawnsMoving && !win.active)
+            StartWinAnimation(win, game.getCurrentPlayerNumber());
 
         if (!isRolling && !pawnsMoving && !game.isGameOver()
             && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
@@ -116,10 +141,14 @@ int main()
         pawn1.update(GetFrameTime());
         pawn2.update(GetFrameTime());
 
+        UpdateWinAnimation(win, GetFrameTime());
+
         BeginDrawing();
 
         DrawRenderer(renderer, diceFace1, diceFace2,
                      pawn1.getPosition(), pawn2.getPosition());
+
+        DrawWinAnimation(renderer, win);
 
         EndDrawing();
     }
