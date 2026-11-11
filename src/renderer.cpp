@@ -3,6 +3,7 @@
 #include "board.hpp"
 
 #include <cmath>
+#include <cstdlib>
 
 const int BOARD_X = 150;
 const int BOARD_Y = 50;
@@ -195,6 +196,25 @@ void LoadRenderer(Renderer& renderer)
     renderer.labelP2 = LoadTexture("assets/images/ui/label_p2.png");
     renderer.settingsIcon = LoadTexture("assets/images/ui/settings.png");
 
+    // Font for the winning banner (falls back to raylib's default font)
+    renderer.winFont = GetFontDefault();
+
+    const char* fontFiles[] = {
+        "C:/Windows/Fonts/segoeuib.ttf",
+        "C:/Windows/Fonts/arialbd.ttf"
+    };
+
+    for (const char* file : fontFiles)
+    {
+        if (FileExists(file))
+        {
+            renderer.winFont = LoadFontEx(file, 96, nullptr, 0);
+            break;
+        }
+    }
+
+    SetTextureFilter(renderer.winFont.texture, TEXTURE_FILTER_BILINEAR);
+
     SetTextureFilter(renderer.player1, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(renderer.player2, TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(renderer.diceSheet, TEXTURE_FILTER_BILINEAR);
@@ -289,9 +309,246 @@ void UnloadRenderer(Renderer& renderer)
     UnloadTexture(renderer.labelP2);
     UnloadTexture(renderer.settingsIcon);
 
+    if (renderer.winFont.texture.id != GetFontDefault().texture.id)
+        UnloadFont(renderer.winFont);
+
     for (int i = 0; i < 9; i++)
         UnloadTexture(renderer.snakeTex[i]);
 
     for (int i = 0; i < 8; i++)
         UnloadTexture(renderer.ladderTex[i]);
+}
+
+
+// ---------- Winning animation ----------
+
+static float RandomFloat(float minValue, float maxValue)
+{
+    return minValue + (maxValue - minValue) * ((float)rand() / (float)RAND_MAX);
+}
+
+static float Clamp01(float value)
+{
+    if (value < 0.0f) return 0.0f;
+    if (value > 1.0f) return 1.0f;
+    return value;
+}
+
+// Goes a little past 1 and settles back (gives the "pop" when things appear)
+static float EaseOutBack(float t)
+{
+    const float c1 = 1.70158f;
+    const float c3 = c1 + 1.0f;
+    float u = t - 1.0f;
+
+    return 1.0f + c3 * u * u * u + c1 * u * u;
+}
+
+static Rectangle GetPlayAgainButton()
+{
+    return {300, 345, 200, 52};
+}
+
+void StartWinAnimation(WinAnimation& win, int winner)
+{
+    win.active = true;
+    win.winner = winner;
+    win.timer = 0.0f;
+    win.confetti.clear();
+
+    const Color palette[] = {
+        {232, 72, 72, 255},
+        {255, 201, 51, 255},
+        {88, 196, 95, 255},
+        {66, 153, 225, 255},
+        {237, 100, 166, 255},
+        {155, 100, 230, 255},
+        {247, 150, 50, 255}
+    };
+
+    for (int i = 0; i < 150; i++)
+    {
+        Confetti piece;
+
+        // start above the screen, so the confetti pours in
+        piece.position = {RandomFloat(0, 800), RandomFloat(-700, -10)};
+        piece.speed = RandomFloat(90, 220);
+        piece.swayAmount = RandomFloat(20, 60);
+        piece.swayPhase = RandomFloat(0, 6.28f);
+        piece.swaySpeed = RandomFloat(2, 5);
+        piece.rotation = RandomFloat(0, 360);
+        piece.rotationSpeed = RandomFloat(-300, 300);
+        piece.width = RandomFloat(8, 14);
+        piece.height = RandomFloat(5, 9);
+        piece.color = palette[rand() % 7];
+
+        win.confetti.push_back(piece);
+    }
+}
+
+void UpdateWinAnimation(WinAnimation& win, float deltaTime)
+{
+    if (!win.active)
+        return;
+
+    win.timer += deltaTime;
+
+    for (Confetti& piece : win.confetti)
+    {
+        piece.position.y += piece.speed * deltaTime;
+
+        piece.swayPhase += piece.swaySpeed * deltaTime;
+        piece.position.x += std::cos(piece.swayPhase) * piece.swayAmount * deltaTime;
+
+        piece.rotation += piece.rotationSpeed * deltaTime;
+
+        // fell off the bottom: send it back to the top
+        if (piece.position.y > 620.0f)
+        {
+            piece.position.y = -RandomFloat(10, 60);
+            piece.position.x = RandomFloat(0, 800);
+        }
+    }
+}
+
+bool IsPlayAgainPressed(const WinAnimation& win)
+{
+    // small delay so the click that finished the game can't trigger it
+    if (!win.active || win.timer < 1.0f)
+        return false;
+
+    if (IsKeyPressed(KEY_ENTER))
+        return true;
+
+    return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+           CheckCollisionPointRec(GetMousePosition(), GetPlayAgainButton());
+}
+
+// Text with a soft shadow, centered at (cx, cy)
+static void DrawCenteredText(const Font& font, const char* text, float cx, float cy,
+                             float size, float spacing, Color color, Color shadow)
+{
+    Vector2 measured = MeasureTextEx(font, text, size, spacing);
+    Vector2 pos = {cx - measured.x / 2, cy - measured.y / 2};
+
+    DrawTextEx(font, text, {pos.x, pos.y + size * 0.06f}, size, spacing, shadow);
+    DrawTextEx(font, text, pos, size, spacing, color);
+}
+
+void DrawWinAnimation(const Renderer& renderer, const WinAnimation& win)
+{
+    if (!win.active)
+        return;
+
+    const float t = win.timer;
+    const Vector2 center = {400, 250};
+
+    // 1. Dim the whole screen
+    float fade = Clamp01(t / 0.5f);
+    DrawRectangle(0, 0, 800, 600, Fade({10, 20, 50, 255}, 0.55f * fade));
+
+    // 2. Slowly turning golden rays and a warm glow behind the winner
+    const int rays = 14;
+    const float step = 2.0f * PI / rays;
+    float turn = t * 0.35f;
+
+    for (int i = 0; i < rays; i++)
+    {
+        float a0 = turn + i * step;
+        float a1 = a0 + step * 0.5f;
+
+        Vector2 p0 = {center.x + std::cos(a0) * 560.0f, center.y + std::sin(a0) * 560.0f};
+        Vector2 p1 = {center.x + std::cos(a1) * 560.0f, center.y + std::sin(a1) * 560.0f};
+
+        DrawTriangle(center, p1, p0, Fade({255, 214, 64, 255}, 0.20f * fade));
+    }
+
+    // soft glow: several see-through circles stacked on top of each other
+    for (int i = 0; i < 10; i++)
+    {
+        float radius = 230.0f * (1.0f - i / 10.0f);
+        DrawCircleV(center, radius, Fade({255, 226, 120, 255}, 0.07f * fade));
+    }
+
+    // 3. Confetti
+    for (const Confetti& piece : win.confetti)
+    {
+        Rectangle rect = {piece.position.x, piece.position.y, piece.width, piece.height};
+
+        DrawRectanglePro(rect, {piece.width / 2, piece.height / 2}, piece.rotation, piece.color);
+    }
+
+    // 4. Winner pawn: pops in, then hops up and down
+    Texture2D pawn = (win.winner == 1) ? renderer.player1 : renderer.player2;
+
+    float pawnPop = EaseOutBack(Clamp01(t / 0.7f));
+    float pawnHeight = 110.0f * pawnPop;
+    float hop = (t > 0.7f) ? std::fabs(std::sin((t - 0.7f) * 4.0f)) * 14.0f : 0.0f;
+
+    float groundY = 218.0f;
+    float pawnScale = pawnHeight / pawn.height;
+
+    DrawEllipse(400, (int)groundY + 4, 30.0f - hop * 0.8f, 7.0f - hop * 0.2f, Fade(BLACK, 0.30f));
+
+    DrawTextureEx(
+        pawn,
+        {400 - pawn.width * pawnScale / 2, groundY - hop - pawnHeight},
+        0.0f,
+        pawnScale,
+        WHITE
+    );
+
+    // 5. Banner: pops in, then breathes a little
+    float bannerScale = EaseOutBack(Clamp01((t - 0.25f) / 0.6f));
+    if (t > 0.9f)
+        bannerScale *= 1.0f + 0.02f * std::sin(t * 3.5f);
+
+    if (bannerScale > 0.05f)
+    {
+        float w = 430.0f * bannerScale;
+        float h = 92.0f * bannerScale;
+        Rectangle banner = {400 - w / 2, 285 - h / 2, w, h};
+
+        DrawRectangleRounded({banner.x, banner.y + 7, w, h}, 0.5f, 12, Fade(BLACK, 0.30f));
+        DrawRectangleRounded(banner, 0.5f, 12, {95, 50, 18, 255});
+
+        Rectangle inner = {banner.x + 5, banner.y + 5, w - 10, h - 10};
+        DrawRectangleRounded(inner, 0.5f, 12, {150, 85, 35, 255});
+
+        Rectangle shine = {inner.x + 4, inner.y + 3, inner.width - 8, inner.height * 0.45f};
+        DrawRectangleRounded(shine, 0.5f, 12, Fade({255, 200, 120, 255}, 0.22f));
+
+        DrawCenteredText(
+            renderer.winFont,
+            TextFormat("Player %d wins!", win.winner),
+            400, 285,
+            50.0f * bannerScale, 2.0f * bannerScale,
+            {255, 244, 220, 255},
+            {70, 35, 10, 255}
+        );
+    }
+
+    // 6. "Play again" button fades in after the banner
+    float buttonAlpha = Clamp01((t - 0.9f) / 0.4f);
+
+    if (buttonAlpha > 0.0f)
+    {
+        Rectangle button = GetPlayAgainButton();
+        bool hover = CheckCollisionPointRec(GetMousePosition(), button);
+
+        Color border = {40, 110, 30, 255};
+        Color fill = hover ? Color{112, 214, 82, 255} : Color{88, 190, 60, 255};
+
+        DrawRectangleRounded({button.x, button.y + 5, button.width, button.height}, 0.5f, 12, Fade(BLACK, 0.30f * buttonAlpha));
+        DrawRectangleRounded(button, 0.5f, 12, Fade(border, buttonAlpha));
+        DrawRectangleRounded({button.x + 4, button.y + 4, button.width - 8, button.height - 8}, 0.5f, 12, Fade(fill, buttonAlpha));
+
+        DrawCenteredText(
+            renderer.winFont, "Play again",
+            button.x + button.width / 2, button.y + button.height / 2,
+            26.0f, 1.0f,
+            Fade(WHITE, buttonAlpha),
+            Fade({30, 80, 20, 255}, buttonAlpha)
+        );
+    }
 }
