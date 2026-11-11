@@ -6,7 +6,7 @@ rolling, snakes and ladders, a winner animation, and a play-again flow.
 
 ## Gameplay Preview
 
-![Snake and Ladder gameplay](screenshot.png)
+![Snake and Ladder gameplay](assets/screenshot/Screenshot.png)
 
 ## Features
 
