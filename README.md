@@ -4,6 +4,10 @@ A simple two-player Snake and Ladder desktop game built with C++ and
 [raylib](https://www.raylib.com/). The game includes animated pawns, dice
 rolling, snakes and ladders, a winner animation, and a play-again flow.
 
+## Gameplay Preview
+
+![Snake and Ladder gameplay](screenshot.png)
+
 ## Features
 
 - Two-player local gameplay

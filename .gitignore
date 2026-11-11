@@ -3,3 +3,6 @@
 
 # Executable files
 *.exe
+
+# Local README preview image
+screenshot.png
